@@ -1,9 +1,11 @@
-﻿using System.Collections.ObjectModel;
+﻿using Newtonsoft.Json;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Windows.Input;
 using WpfNoteManager.Models;
-
 
 namespace WpfNoteManager.ViewModels
 {
@@ -101,39 +103,34 @@ namespace WpfNoteManager.ViewModels
 
 		private void SaveNotes(object parameter)
 		{
-			string file_path = "notes.txt";
-			using (StreamWriter writer = new StreamWriter(file_path, false))
-			{
-				foreach (var note in Notes)
-				{
-					writer.WriteLine($"{note.Id},{note.Title},{note.Content}");
-				}
-			}
+			var list_to_save = new List<NoteItem>(Notes);
+			string json = JsonConvert.SerializeObject(list_to_save, Formatting.Indented);
+
+			File.WriteAllText("notes.txt", json);
 		}
 
 		private void LoadNotes(object parameter)
 		{
-			string file_path = "notes.txt";
-			if (!File.Exists(file_path)) return;
+			if (!File.Exists("notes.txt"))
+			{
+				return;
+			}
+
+			string json = File.ReadAllText("notes.txt");
+			var loaded = JsonConvert.DeserializeObject<List<NoteItem>>(json);
 
 			Notes.Clear();
-
-			var lines = File.ReadAllLines(file_path);
-			foreach(var line in lines)
+			if (loaded != null)
 			{
-				var parts = line.Split(new string[] { "||" }, System.StringSplitOptions.None);
-				if (parts.Length == 3)
+				foreach (var note in loaded)
 				{
-					if (int.TryParse(parts[0], out int id))
-					{
-						Notes.Add(new NoteItem
-						{
-							Id = id,
-							Title = parts[1],
-							Content = parts[2]
-						});
-					}
+					Notes.Add(note);
 				}
+			}
+
+			if (Notes.Count > 0)
+			{
+				SelectedNote = Notes[0];
 			}
 		}
 		
