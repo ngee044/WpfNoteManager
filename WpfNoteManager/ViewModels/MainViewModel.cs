@@ -6,6 +6,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Windows.Input;
 using WpfNoteManager.Models;
+using Microsoft.Win32;
 
 namespace WpfNoteManager.ViewModels
 {
@@ -103,10 +104,18 @@ namespace WpfNoteManager.ViewModels
 
 		private void SaveNotes(object parameter)
 		{
-			var list_to_save = new List<NoteItem>(Notes);
-			string json = JsonConvert.SerializeObject(list_to_save, Formatting.Indented);
+			var save_file_dialog = new SaveFileDialog
+			{
+				Filter = "JSON File (*.json)|*.json",
+				FileName = "notes.json"
+			};
 
-			File.WriteAllText("notes.txt", json);
+			if (save_file_dialog.ShowDialog() == true)
+			{
+				var data = new List<NoteItem>(Notes);
+				string json = JsonConvert.SerializeObject(data, Formatting.Indented);
+				File.WriteAllText(save_file_dialog.FileName, json);
+			}
 		}
 
 		private void LoadNotes(object parameter)
